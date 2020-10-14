@@ -89,70 +89,78 @@ public class Parking
      */
     public void facturarCliente(char tipoTarifa, int entrada, int salida, int dia) {
         cliente ++;
+        String tipoDeTarifa = "";
+        double precioTarifa = 0;
         //Conversión de las horas
         int horaEntra = entrada / 100;
         int minutoEntra = entrada % 100;
         int horaSal = salida / 100; 
         int minutoSal = salida % 100;
 
-        String horaEntrada = horaEntra + ":" + minutoEntra;
-        String horaSalida = horaSal + ":" + minutoSal;
-        
         int minutosEntrada = horaEntra * 60 + minutoEntra;
         int minutosSalida = horaSal * 60 + minutoSal;
-        
-        int importeTicketR = 0;
-        importeTicketR += PRECIO_BASE_REGULAR + (((PRECIO_MEDIA_REGULAR_HASTA11) /30 * 3) + (PRECIO_MEDIA_REGULAR_DESPUES11) /30 * 3);
+        String minutosEntradas;
+        String minutosSalidas;
 
-        int importeTicketC = 0;
-        importeTicketC += PRECIO_PRIMERAS3_COMERCIAL + (((minutosSalida - minutosEntrada) /30 * 3));
-        
-
-        switch (tipoTarifa){
-            case 'R': if((entrada >= HORA_INICIO_ENTRADA_TEMPRANA && entrada < HORA_FIN_ENTRADA_TEMPRANA) && (salida >= HORA_INICIO_SALIDA_TEMPRANA && salida < HORA_FIN_SALIDA_TEMPRANA)){
-                System.out.println ("******************************************");
-                System.out.println ("Cliente Nº: " + cliente);
-                System.out.println ("Hora entrada: " + horaEntrada);
-                System.out.println ("Hora salida: " + horaSalida);
-                System.out.println ("Tarifa a aplicar: " + "REGULAR Y TEMPRANA");
-                System.out.println ("Importe a pagar: " + PRECIO_TARIFA_PLANA_REGULAR + "€");
-                System.out.println ("******************************************");
-
-            }
-            else{
-                System.out.println ("******************************************");
-                System.out.println ("Cliente Nº: " + cliente);
-                System.out.println ("Hora entrada: " + horaEntrada);
-                System.out.println ("Hora salida: " + horaSalida);
-                System.out.println ("Tarifa a aplicar: " + "REGULAR");
-                System.out.println ("Importe a pagar: " + PRECIO_TARIFA_PLANA_REGULAR + "€");
-                System.out.println ("******************************************");
-            }
-            regular ++;
-            break;
-            case 'C': if((salida - entrada) <= 180){
-                importeTotal = 5;
-                System.out.println ("******************************************");
-                System.out.println ("Cliente Nº: " + cliente);
-                System.out.println ("Hora entrada: " + horaEntrada);
-                System.out.println ("Hora salida: " + horaSalida);
-                System.out.println ("Tarifa a aplicar: " + "COMERCIAL");
-                System.out.println ("Importe a pagar: " + importeTotal + "€");
-                System.out.println ("******************************************");
-            }
-            else{
-                System.out.println ("******************************************");
-                System.out.println ("Cliente Nº: " + cliente);
-                System.out.println ("Hora entrada: " + horaEntrada);
-                System.out.println ("Hora salida: " + horaSalida);
-                System.out.println ("Tarifa a aplicar: " + "COMERCIAL");
-                System.out.println ("Importe a pagar: " + importeTicketC + "€");
-                System.out.println ("******************************************");
-            }    
-            comercial ++;
-            break;
+        if(minutoEntra < 10){
+            minutosEntradas = "0" + minutoEntra;
+        }
+        else{
+            minutosEntradas = "" + minutoEntra;
+        }
+        if(minutoSal < 10){
+            minutosSalidas = "0" + minutoSal;
+        }
+        else{
+            minutosSalidas = "" + minutoSal;
         }
 
+        String horaEntrada = horaEntra + ":" + minutosEntradas;
+        String horaSalida = horaSal + ":" + minutosSalidas;
+        
+        switch (tipoTarifa){
+            case 'R': if(minutosEntrada >= HORA_INICIO_ENTRADA_TEMPRANA && minutosEntrada <= HORA_FIN_ENTRADA_TEMPRANA && minutosSalida >= HORA_INICIO_SALIDA_TEMPRANA && minutosSalida <= HORA_FIN_SALIDA_TEMPRANA){
+                precioTarifa = PRECIO_TARIFA_PLANA_REGULAR;
+                tipoDeTarifa = "REGULAR Y TEMPRANA";
+            }
+            else{
+                precioTarifa = PRECIO_BASE_REGULAR;
+                if (entrada < 1100) {
+                    if (salida > 1100) {
+                        precioTarifa += (11 * 60 - minutosEntrada) / 30 * PRECIO_MEDIA_REGULAR_HASTA11 + (minutosSalida - 11 * 60) / 30 * PRECIO_MEDIA_REGULAR_DESPUES11;
+                    }
+                    else {
+                        precioTarifa += (minutosSalida - minutosEntrada) /30  * PRECIO_MEDIA_REGULAR_HASTA11;
+                    }
+                }
+                else {
+                    precioTarifa += (minutosSalida - minutosEntrada) /30  * PRECIO_MEDIA_REGULAR_DESPUES11;
+                }
+                tipoDeTarifa = "REGULAR";
+            }
+            regular++;
+            break;
+            default:
+            precioTarifa = PRECIO_PRIMERAS3_COMERCIAL;
+            if(minutosSalida - minutosEntrada > 180){
+                precioTarifa += (minutosSalida - minutosEntrada - 180) / 30 * PRECIO_MEDIA_COMERCIAL;
+            }
+            tipoDeTarifa = "COMERCIAL";
+            comercial++;
+            break;
+        }
+        System.out.println ("******************************************");
+        System.out.println ("Cliente Nº: " + cliente);
+        System.out.println ("Hora entrada: " + horaEntrada);
+        System.out.println ("Hora salida: " + horaSalida);
+        System.out.println ("Tarifa a aplicar: " + tipoDeTarifa);
+        System.out.println ("Importe a pagar: " + precioTarifa + "€");
+        System.out.println ("******************************************");
+        importeTotal = importeTotal + precioTarifa;
+        if (importeMaximoComercial < precioTarifa) {
+            importeMaximoComercial = precioTarifa;
+            clienteMaximoComercial = cliente;
+        }
     }
 
     /**
@@ -174,7 +182,7 @@ public class Parking
      *  Calcula y devuelve un String que representa el nombre del día      
      *  en el que más clientes han utilizado el parking - "SÁBADO"   "DOMINGO" o  "LUNES"      
      */ 
-    public String diaMayorNumeroClientes() {
+    public String diaMayorNumeroClientes() { 
         if(clientesDomingo > clientesLunes && clientesDomingo > clientesSabado){
             return "DOMINGO";
         }
